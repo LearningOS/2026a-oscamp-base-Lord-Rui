@@ -2,7 +2,7 @@
   "schema": 1,
   "courseId": 2074,
   "repository": "LearningOS/2026a-oscamp-base-Lord-Rui",
-  "commit": "5a1ac10afef35d74b259a4fa90caad2a0764bbc0",
+  "commit": "dc50bedd8cddb53c499e3821112831f338deaff4",
   "score": 11,
   "totalScore": 100,
   "exercises": [
@@ -23,16 +23,16 @@
     {
       "name": "channel",
       "max": 4,
-      "score": 4,
-      "status": "pass",
-      "exitCode": 0
+      "score": 0,
+      "status": "fail",
+      "exitCode": 101
     },
     {
       "name": "process_pipe",
       "max": 4,
-      "score": 0,
-      "status": "fail",
-      "exitCode": 101
+      "score": 4,
+      "status": "pass",
+      "exitCode": 0
     },
     {
       "name": "mem_primitives",
@@ -176,9 +176,9 @@
     }
   ],
   "student": "Lord-Rui",
-  "runId": "36737369227",
+  "runId": "37183418188",
   "runAttempt": "1",
   "upload": {
-    "status": "accepted"
+    "status": "pending"
   }
 }
