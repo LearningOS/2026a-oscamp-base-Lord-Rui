@@ -23,7 +23,7 @@ pub fn simple_send_recv(items: Vec<String>) -> Vec<String> {
         for item in items{
             tx.send(item).unwrap();
         }
-    })
+    });
 
     rx.into_iter().collect()
 }
