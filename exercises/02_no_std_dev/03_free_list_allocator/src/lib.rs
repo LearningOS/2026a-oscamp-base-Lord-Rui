@@ -37,7 +37,9 @@
 #![cfg_attr(not(test), no_std)]
 
 use core::alloc::{GlobalAlloc, Layout};
+use core::ffi::FromBytesWithNulError::NotNulTerminated;
 use core::ptr::null_mut;
+use core::sync::atomic::Ordering::Relaxed;
 
 /// Free block header, stored at the beginning of each free memory block
 struct FreeBlock {
@@ -119,7 +121,34 @@ unsafe impl GlobalAlloc for FreeListAllocator {
         // TODO: Step 2 — no suitable block in free_list, allocate from bump region
         //
         // Same logic as 02_bump_allocator's alloc
-        todo!()
+        let mut prev: *mut FreeBlock = null_mut();
+        let mut curr: *mut FreeBlock = self.free_list_head();
+        while !curr.is_null(){
+            let addr = curr as usize;
+            
+            let is_aligned = (addr&(align-1))==0;
+            if is_aligned && curr.read().size>=size{
+                if prev.is_null(){
+                    self.set_free_list_head(curr.read().next);
+                }else{
+                    prev.read().next = curr.read().next;
+                }
+                curr.read().next = null_mut();
+                return curr as *mut u8;
+            }
+            prev = curr;
+            curr = curr.read().next;
+        }
+        let cur = self.bump_next.load(Relaxed);
+        // align
+        let aligned = (cur+align-1)& !(align-1);
+        if aligned+size>self.heap_end{
+            return null_mut();
+        }
+        self.bump_next.store(aligned + size, Relaxed);
+        aligned as *mut u8
+
+
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
@@ -131,7 +160,14 @@ unsafe impl GlobalAlloc for FreeListAllocator {
         // 1. Cast ptr to *mut FreeBlock
         // 2. Write FreeBlock { size, next: current list head }
         // 3. Update free_list head to ptr
-        todo!()
+        let align = layout.align();
+        let cur = ptr as usize;
+        let aligned = (cur+align-1)& !(align-1);
+        let block = aligned as *mut FreeBlock;
+        let cur_head = self.free_list_head() as *mut FreeBlock;
+        block.write(FreeBlock{size,next:cur_head});
+        self.set_free_list_head(block);
+        
     }
 }
 

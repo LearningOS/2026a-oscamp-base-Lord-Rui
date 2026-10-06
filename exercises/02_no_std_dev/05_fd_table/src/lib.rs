@@ -51,13 +51,15 @@ pub struct FdTable {
     // TODO: Design the internal structure
     // Hint: use Vec<Option<Arc<dyn File>>>
     //       the index is the fd number, None means the fd is closed or unallocated
+    pub fd_table:Vec<Option<Arc<dyn File>>>,
 }
 
 impl FdTable {
     /// Create an empty fd table
     pub fn new() -> Self {
         // TODO
-        todo!()
+        let fd_table:Vec<Option<Arc<dyn File>>> = Vec::new();
+        FdTable { fd_table }
     }
 
     /// Allocate a new fd, return the fd number.
@@ -65,25 +67,49 @@ impl FdTable {
     /// Prefers reusing the smallest closed fd number; if no free slot, appends to the end.
     pub fn alloc(&mut self, file: Arc<dyn File>) -> usize {
         // TODO
-        todo!()
+        let len = self.fd_table.len();
+        for i in 0..len{
+            if self.fd_table[i].is_none(){
+                self.fd_table[i] = Some(file);
+                return i;
+            }
+        }
+        self.fd_table.push(Some(file));
+        len
     }
 
     /// Get the file object for an fd. Returns None if the fd doesn't exist or is closed.
     pub fn get(&self, fd: usize) -> Option<Arc<dyn File>> {
         // TODO
-        todo!()
+
+        if fd>=self.fd_table.len() || self.fd_table[fd].is_none(){
+            return None;
+        }else{
+            let res =  self.fd_table[fd].clone();
+            res
+        }
+
     }
 
     /// Close an fd. Returns true on success, false if the fd doesn't exist or is already closed.
     pub fn close(&mut self, fd: usize) -> bool {
         // TODO
-        todo!()
+        if fd>=self.fd_table.len() || self.fd_table[fd].is_none(){
+            return false;}
+        return self.fd_table[fd].take().is_some();
+        
     }
 
     /// Return the number of currently allocated fds (excluding closed ones)
     pub fn count(&self) -> usize {
         // TODO
-        todo!()
+        let mut count:usize = 0;
+        for item in self.fd_table.iter(){
+            if !item.is_none(){
+                count+=1;
+            }
+        }
+        count
     }
 }
 
