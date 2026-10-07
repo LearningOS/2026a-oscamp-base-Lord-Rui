@@ -8,7 +8,7 @@
 //! - `compare_exchange` lock‑free primitive
 //! - `Ordering` memory ordering
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering::{self, Relaxed}};
 
 pub struct AtomicCounter {
     value: AtomicU64,
@@ -26,19 +26,19 @@ impl AtomicCounter {
     /// Hint: use `fetch_add` with `Ordering::Relaxed`
     pub fn increment(&self) -> u64 {
         // TODO
-        todo!()
+        self.value.fetch_add(1, Relaxed)
     }
 
     /// Atomically decrements by 1, returns the value **before** decrement.
     pub fn decrement(&self) -> u64 {
         // TODO
-        todo!()
+        self.value.fetch_sub(1, Relaxed)
     }
 
     /// Gets the current value.
     pub fn get(&self) -> u64 {
         // TODO
-        todo!()
+        self.value.load(Relaxed)
     }
 
     /// Atomic CAS (Compare-And-Swap) operation.
@@ -48,7 +48,10 @@ impl AtomicCounter {
     /// Hint: use `compare_exchange` with success ordering `Ordering::AcqRel` and failure ordering `Ordering::Acquire`
     pub fn compare_and_swap(&self, expected: u64, new_val: u64) -> Result<u64, u64> {
         // TODO
-        todo!()
+        match self.value.compare_exchange(expected,new_val,Ordering::AcqRel,Ordering::Acquire){
+            Ok(_) => return Ok(expected),
+            Err(_) => return Err(self.value.load(Relaxed)),
+        }
     }
 
     /// Multiply the value atomically using a CAS loop.
@@ -57,12 +60,14 @@ impl AtomicCounter {
     /// Hint: read current value in loop, compute new value, try CAS to update, retry on failure.
     pub fn fetch_multiply(&self, multiplier: u64) -> u64 {
         // TODO: CAS loop
-        // loop {
-        //     let current = ...
-        //     let new = current * multiplier;
-        //     match self.compare_and_swap(current, new) { ... }
-        // }
-        todo!()
+        loop {
+            let current = self.value.load(Relaxed);
+            let new = current * multiplier;
+            match self.compare_and_swap(current, new){
+                Ok(_) => return current,
+                Err(_) => continue,
+            }
+        }
     }
 }
 
